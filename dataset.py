@@ -26,7 +26,9 @@ def load_coordinates(path):
 
 
 class LandmarkDataset(Dataset):
-    def __init__(self, name_point='S_Point', size_image=520, transform=None):
+    def __init__(self, name_point='S_Point', stage=None, size_image=520, transform=None):
+        assert stage in ['train', 'val', 'test'], 'stage must be one of train, val, test'
+        
         self.transform = transform
         # read the mean XY from prepration, to create ROI later
         text_mean_x_y_dir = 'data/Preparation/' + name_point + '/Mean_X_Y.txt'
@@ -46,8 +48,8 @@ class LandmarkDataset(Dataset):
             mean_y = int(y_coor)
 
         # read the real coordinate of S_point for each image
-        recognized_text_dir = 'data/' + name_point + '/Coordinates'
-        recognized_image_dir = 'data/' + name_point + '/Images_without'
+        recognized_text_dir = 'data/' + name_point + '/Coordinates_' + stage
+        recognized_image_dir = 'data/' + name_point + '/Images_without_' + stage
         half_size = int(size_image/2)
 
         roi_x_start = mean_x - half_size
@@ -55,16 +57,9 @@ class LandmarkDataset(Dataset):
         roi_y_start = mean_y - half_size
         roi_y_end = mean_y + half_size
 
-        num_images = 0
-        for subdir, dirs, files in os.walk(recognized_text_dir):
-            for file in files:
-                num_images += 1
-
-        num_texts = 0
-        for subdir, dirs, files in os.walk(recognized_image_dir):
-            for file in files:
-                num_texts += 1
-
+        # check number of files
+        num_images = len([name for name in os.listdir(recognized_image_dir) if os.path.isfile(os.path.join(recognized_image_dir, name))])
+        num_texts = len([name for name in os.listdir(recognized_text_dir) if os.path.isfile(os.path.join(recognized_text_dir, name))])
         assert num_images == num_texts, 'Problem occurs. The number of text files does not ' \
                                                 'equal the number of images. There must be one text file for each image!'
 
@@ -72,9 +67,9 @@ class LandmarkDataset(Dataset):
         self.input_images = np.zeros((num_images, size_image, size_image), dtype=np.uint8)
         self.output = np.zeros((num_images, 2))
 
-        print('Images are being preprocessed...')
-        # crop the image with ROI, also load the real target points and normalize the coordinate with the size of ROI
+        print(f'{stage} images are being preprocessed...')
         
+        # crop the image with ROI, also load the real target points and normalize the coordinate with the size of ROI
         num_img = 0
         for subdir, dirs, files in os.walk(recognized_image_dir):
             for file in files:

@@ -14,7 +14,6 @@ class LandmarkDetector(pl.LightningModule):
             self.model = CNN(cnn_type, output_dim)
                         
         self.criterion = torch.nn.MSELoss()
-
         self.mae_train = torchmetrics.MeanAbsoluteError()
         self.mae_val = torchmetrics.MeanAbsoluteError()
             
@@ -47,8 +46,8 @@ class LandmarkDetector(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         return self._shared_step(batch, batch_idx, 'train')
 
-    # def validation_step(self, batch, batch_idx):
-    #     return self._shared_step(batch, batch_idx, 'val')
+    def validation_step(self, batch, batch_idx):
+        return self._shared_step(batch, batch_idx, 'val')
     
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
