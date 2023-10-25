@@ -1,0 +1,5 @@
+dimension: 3
+cnn_type: custom  # resnet18
+max_epochs: 50
+lr: 1e-4
+batch_size: 1
