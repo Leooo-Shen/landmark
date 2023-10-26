@@ -1,3 +1,0 @@
-image5
-Number of points: 1
-X:989, Y:902;

@@ -1,3 +1,0 @@
-image4
-Number of points: -2
-X:1695, Y:1178;

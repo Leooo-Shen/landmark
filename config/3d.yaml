@@ -1,5 +1,11 @@
-dimension: 3
-cnn_type: custom  # resnet18
+dimension: 3d
+
+cnn_type: custom  
+# cnn_type: resnet18 
+
+backbone_type: 2d
+# backbone_type: 3d
+
 max_epochs: 50
 lr: 1e-4
 batch_size: 1
