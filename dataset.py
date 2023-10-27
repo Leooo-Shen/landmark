@@ -53,10 +53,6 @@ class LandmarkDataset(Dataset):
             mean_x = int(x_coor)
             mean_y = int(y_coor)
 
-        # if dimension == '2d':
-        #     self.input_images, self.output = self.read_data_2d(name_point, mean_x, mean_y, size_image, stage)
-        # elif dimension == '3d':
-        #     self.input_images, self.output = self.read_data_3d(name_point, mean_x, mean_y, size_image, stage)
         self.input_images, self.output = self.read_data(dimension, name_point, mean_x, mean_y, size_image, stage)
         
         
@@ -107,13 +103,12 @@ class LandmarkDataset(Dataset):
                 if dimension == '3d':
                     name_image = recognized_image_dir+'/'+curr_file_name+'.nii.gz'
                     image = nib.load(name_image)
-                    image = np.array(image.dataobj)
-                    roi = image[:, roi_y_start:roi_y_end, roi_x_start:roi_x_end]
+                    image = np.array(image.dataobj).transpose(2, 1, 0)
+                    roi = image[roi_y_start:roi_y_end, roi_x_start:roi_x_end, :]
                 
                 elif dimension == '2d':
                     name_image = recognized_image_dir+'/'+curr_file_name+'.png'
                     image = cv2.imread(name_image, 0)
-                    print(name_image, image.shape)
                     roi = image[roi_y_start:roi_y_end, roi_x_start:roi_x_end]
                     
                 coord_path = recognized_text_dir+'/'+curr_file_name+'.txt'
@@ -130,23 +125,23 @@ class LandmarkDataset(Dataset):
 if __name__ == '__main__':
     
     # test dataset
-    dataset = LandmarkDataset(dimension='2d', stage='train')
+    dataset = LandmarkDataset(dimension='3d', stage='train')
     print(len(dataset))
     img, coord = dataset[0]
-    print(img.shape, coord.shape)
+    print(img.shape, coord.shape) 
     
-    import matplotlib.pyplot as plt
+    # import matplotlib.pyplot as plt
     
-    if len(img.shape) == 2:
-        plt.imshow(img, cmap='gray')
-        plt.scatter(coord[0]*520, coord[1]*520, c='r', s=10)
-        plt.show()
+    # if len(img.shape) == 2:
+    #     plt.imshow(img, cmap='gray')
+    #     plt.scatter(coord[0]*520, coord[1]*520, c='r', s=10)
+    #     plt.show()
         
-    elif len(img.shape) == 3:
-        # create a figure with subplots, visualiaze each slice of img on the first dim
-        figure, axes = plt.subplots(nrows=1, ncols=img.shape[0], figsize=(20, 5))
-        for i in range(img.shape[0]):
-            axes[i].imshow(img[i], cmap='gray')
-            axes[i].scatter(coord[0]*520, coord[1]*520, c='r', s=10)
-        plt.show()
+    # elif len(img.shape) == 3:
+    #     # create a figure with subplots, visualiaze each slice of img on the first dim
+    #     figure, axes = plt.subplots(nrows=1, ncols=img.shape[0], figsize=(20, 5))
+    #     for i in range(img.shape[0]):
+    #         axes[i].imshow(img[i], cmap='gray')
+    #         axes[i].scatter(coord[0]*520, coord[1]*520, c='r', s=10)
+    #     plt.show()
                 

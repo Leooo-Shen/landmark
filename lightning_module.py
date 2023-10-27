@@ -2,7 +2,8 @@ from typing import Tuple
 import torch
 import torchmetrics
 import pytorch_lightning as pl
-from cnn2d import CNN2D
+from cnn2d import CNN2D, ResNet2D
+from cnn3d import CNN3D, ResNet3D
 import numpy as np 
 from dataset import load_coordinates
 import os
@@ -11,19 +12,31 @@ import cv2
 
 
 class LandmarkDetector(pl.LightningModule):
-    def __init__(self, cnn_type, output_dim=2, lr=1e-4) -> None:
+    def __init__(self, cfg) -> None:
         super().__init__()
-        self.lr = lr
-        self.cnn_type = cnn_type
-        if cnn_type == 'custom':
-            self.model = CNN2D(cnn_type, output_dim, filters=30, kernel_size=4)
-        elif cnn_type == 'resnet18':
-            self.model = CNN2D(cnn_type, output_dim)
-                        
+        self.lr = cfg.lr
+        self.cnn_type = cfg.cnn_type
+        
+        # 2D detector
+        if cfg.dimension == '2d':
+            if cfg.cnn_type == 'custom':
+                self.model = CNN2D(cfg.output_dim, filters=30, kernel_size=4)
+            elif cfg.cnn_type == 'resnet18':
+                self.model = ResNet2D(cfg.output_dim, pretrained=False)
+            print(f'[*] 2D data using {cfg.cnn_type} model')
+        
+        # 3D detector
+        elif cfg.dimension == '3d':
+            if cfg.cnn_type == 'custom':
+                self.model = CNN3D(cfg.backbone_type, 10, cfg.output_dim, filters=30, kernel_size=4)
+            elif cfg.cnn_type == 'resnet18':
+                self.model = ResNet3D(cfg.backbone_type, 10, cfg.output_dim)
+            print(f'[*] 3D data using {cfg.cnn_type} model with {cfg.backbone_type} backbone')
+            
         self.criterion = torch.nn.MSELoss()
         self.mae_train = torchmetrics.MeanAbsoluteError()
         self.mae_val = torchmetrics.MeanAbsoluteError()
-            
+        
         
     def forward(self, x):
         return self.model(x)
@@ -78,29 +91,29 @@ class LandmarkDetector(pl.LightningModule):
         self.log('test.horizontaldistance', horizontaldistance, on_epoch=True, on_step=False)
         self.log('test.verticaldistance', verticaldistance, on_epoch=True, on_step=False)
 
-        # plot the pred point
-        oringinal_image = cv2.imread('data/2D/S_Point/Images_without_test/image5.png')
-        target = target.detach().cpu().numpy()
-        img = img.detach().cpu().numpy()
+        # # plot the pred point
+        # oringinal_image = cv2.imread('data/2D/S_Point/Images_without_test/image5.png')
+        # target = target.detach().cpu().numpy()
+        # img = img.detach().cpu().numpy()
         
-        plt.figure(figsize=(10, 5))
-        plt.subplot(1, 2, 1)
-        plt.imshow(img[0][0], cmap='gray')
-        plt.scatter(y_hat[0][0]*size_image, y_hat[0][1]*size_image, c='r', alpha=1) 
-        plt.scatter(target[0][0]*size_image, target[0][1]*size_image, c='g', alpha=1) 
-        plt.title('roi view')
+        # plt.figure(figsize=(10, 5))
+        # plt.subplot(1, 2, 1)
+        # plt.imshow(img[0][0], cmap='gray')
+        # plt.scatter(y_hat[0][0]*size_image, y_hat[0][1]*size_image, c='r', alpha=1) 
+        # plt.scatter(target[0][0]*size_image, target[0][1]*size_image, c='g', alpha=1) 
+        # plt.title('roi view')
         
-        plt.subplot(1, 2, 2)
-        plt.imshow(oringinal_image, cmap='gray')
-        plt.scatter(x_pred, y_pred, c='r', alpha=1) 
-        plt.scatter(x_coor, y_coor, c='g', alpha=1)
-        plt.title('global view')
+        # plt.subplot(1, 2, 2)
+        # plt.imshow(oringinal_image, cmap='gray')
+        # plt.scatter(x_pred, y_pred, c='r', alpha=1) 
+        # plt.scatter(x_coor, y_coor, c='g', alpha=1)
+        # plt.title('global view')
         
-        plt.suptitle('predited point in red, original point in green')
-        save_dir = os.path.join('predictions', self.cnn_type)
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        plt.savefig(save_dir + '/image5.png')
+        # plt.suptitle('predited point in red, original point in green')
+        # save_dir = os.path.join('predictions', self.cnn_type)
+        # if not os.path.exists(save_dir):
+        #     os.makedirs(save_dir)
+        # plt.savefig(save_dir + '/image5.png')
         
         
     def configure_optimizers(self):

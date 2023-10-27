@@ -71,10 +71,10 @@ class CNN2D(nn.Module):
 
 
 class ResNet2D(nn.Module):
-    def __init__(self, output_dim):
+    def __init__(self, output_dim, pretrained=False):
         super().__init__()
         
-        resnet = torchvision.models.resnet18(pretrained=False)
+        resnet = torchvision.models.resnet18(pretrained=pretrained)
         resnet.fc = nn.Linear(512, output_dim)
         
         # conver 1 channel to 3 channels

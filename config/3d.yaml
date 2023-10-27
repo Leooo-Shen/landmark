@@ -1,11 +1,13 @@
 dimension: 3d
+name_point: S_Point
 
-cnn_type: custom  
-# cnn_type: resnet18 
+# cnn_type: custom  
+cnn_type: resnet18 
 
-backbone_type: 2d
-# backbone_type: 3d
+# backbone_type: 2d
+backbone_type: 3d
 
+output_dim: 2
 max_epochs: 50
 lr: 1e-4
 batch_size: 1

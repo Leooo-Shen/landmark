@@ -1,4 +1,4 @@
-import torchvision
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from cnn2d import CNN2D, ResNet2D
@@ -77,9 +77,8 @@ class CNN3D(nn.Module):
             )
             
     def forward(self, x):
-        if self.backbone_type =='2d':
-            x = x.squeeze(1)
-        print(x.shape)
+        if self.backbone_type =='3d':
+            x = x.unsqueeze(1)
         x = self.input_layer(x)
         return self.backbone(x)
     
@@ -104,8 +103,8 @@ class ResNet3D(nn.Module):
             self.backbone.fc =  nn.Linear(512, output_dim)
            
     def forward(self, x):
-        if self.backbone_type =='2d':
-            x = x.squeeze(1)
+        if self.backbone_type =='3d':
+            x = x.unsqueeze(1)
         x = self.input_layer(x)
         return self.backbone(x)
     
