@@ -77,8 +77,6 @@ class CNN3D(nn.Module):
             )
             
     def forward(self, x):
-        if self.backbone_type =='3d':
-            x = x.unsqueeze(1)
         x = self.input_layer(x)
         return self.backbone(x)
     
@@ -103,8 +101,6 @@ class ResNet3D(nn.Module):
             self.backbone.fc =  nn.Linear(512, output_dim)
            
     def forward(self, x):
-        if self.backbone_type =='3d':
-            x = x.unsqueeze(1)
         x = self.input_layer(x)
         return self.backbone(x)
     

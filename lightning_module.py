@@ -18,7 +18,7 @@ class LandmarkDetector(pl.LightningModule):
         self.cnn_type = cfg.cnn_type
         
         # 2D detector
-        if cfg.dimension == '2d':
+        if cfg.n_dim == '2d':
             if cfg.cnn_type == 'custom':
                 self.model = CNN2D(cfg.output_dim, filters=30, kernel_size=4)
             elif cfg.cnn_type == 'resnet18':
@@ -26,7 +26,7 @@ class LandmarkDetector(pl.LightningModule):
             print(f'[*] 2D data using {cfg.cnn_type} model')
         
         # 3D detector
-        elif cfg.dimension == '3d':
+        elif cfg.n_dim == '3d':
             if cfg.cnn_type == 'custom':
                 self.model = CNN3D(cfg.backbone_type, 10, cfg.output_dim, filters=30, kernel_size=4)
             elif cfg.cnn_type == 'resnet18':

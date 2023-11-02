@@ -6,6 +6,7 @@ from dataset import LandmarkDataset
 from lightning_module import LandmarkDetector
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
+from transform import RandomRotation, ColorJitter, GaussianBlur
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -15,7 +16,7 @@ warnings.filterwarnings("ignore")
 
 def build_callbacks(cfg):
     
-    dirpath = os.path.join(*['checkpoints', cfg.dimension, cfg.cnn_type])
+    dirpath = os.path.join(*['checkpoints', cfg.n_dim, cfg.cnn_type])
     checkpoint_callback = ModelCheckpoint(
         monitor='val.loss',
         mode='min',
@@ -38,7 +39,8 @@ def build_callbacks(cfg):
 
 def build_transforms():
     t = transforms.Compose([
-        transforms.ToTensor(),
+        ColorJitter(brightness=0.5, contrast=0.5, saturation=0, hue=0),
+        GaussianBlur(kernel_size=3, sigma=(0.1, 1.0)),
     ])
     
     return t
@@ -50,34 +52,34 @@ def main(cfg: DictConfig):
     batch_size = cfg.batch_size
     transforms = build_transforms()
     
-    exp_name = f'{cfg.dimension}_{cfg.cnn_type}'
+    exp_name = f'{cfg.n_dim}_{cfg.cnn_type}'
     backbone_type = cfg.get('backbone_type', None)
     if backbone_type is not None:
         exp_name += f'_{backbone_type}backbone'
     exp_name += f'_lr{str(cfg.lr)}'
     
         
-    logger = WandbLogger(project='landmark_detection', name=exp_name)
-    # logger = None
+    # logger = WandbLogger(project='landmark_detection', name=exp_name)
+    logger = None
     
     model = LandmarkDetector(cfg)    
     
     train_loader = DataLoader(
-        LandmarkDataset(cfg.dimension, 'train', cfg.name_point , size_image=520, transform=transforms),
+        LandmarkDataset(cfg.train_path, cfg.n_dim, cfg.root_dir, cfg.img_dir, cfg.point_type, cfg.size_image, transform=transforms),
         batch_size=batch_size,
         shuffle=True,
         num_workers=0,
         pin_memory=False
     )
     val_dataloader = DataLoader(
-        LandmarkDataset(cfg.dimension, 'val', cfg.name_point, size_image=520, transform=transforms),
+        LandmarkDataset(cfg.val_path, cfg.n_dim, cfg.root_dir, cfg.img_dir, cfg.point_type, cfg.size_image, transform=None),
         batch_size=batch_size,
         shuffle=False,
         num_workers=0,
         pin_memory=False
     )
     test_dataloader = DataLoader(
-        LandmarkDataset(cfg.dimension, 'test', cfg.name_point, size_image=520, transform=transforms),
+        LandmarkDataset(cfg.test_path, cfg.n_dim, cfg.root_dir, cfg.img_dir, cfg.point_type, cfg.size_image, transform=None),
         batch_size=batch_size,
         shuffle=False,
         num_workers=0,
@@ -85,7 +87,7 @@ def main(cfg: DictConfig):
     )
     
     accelerator = 'mps'
-    if cfg.dimension == '3d' and cfg.backbone_type == '3d':
+    if cfg.n_dim == '3d' and cfg.backbone_type == '3d':
         accelerator = 'cpu'
     
     trainer = pl.Trainer(
