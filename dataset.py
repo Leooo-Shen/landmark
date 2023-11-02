@@ -53,7 +53,7 @@ class LandmarkDataset(Dataset):
             mean_x = int(x_coor)
             mean_y = int(y_coor)
 
-        self.input_images, self.output = self.read_data(dimension, name_point, mean_x, mean_y, size_image, stage)
+        self.input_images, self.coord = self.read_data(dimension, name_point, mean_x, mean_y, size_image, stage)
         
         
     def __len__(self):
@@ -63,7 +63,7 @@ class LandmarkDataset(Dataset):
         img = self.input_images[index]
         if self.transform is not None:
             img = self.transform(img)
-        target = self.output[index]
+        target = self.coord[index]
         target = torch.tensor(target, dtype=torch.float32)    
         return img, target
     
@@ -91,7 +91,7 @@ class LandmarkDataset(Dataset):
 
         # The arrays with the data needed for training
         input_images = []
-        output = []
+        coord = []
         print(f'{stage} images are being preprocessed...')
         
         # crop the image with ROI, also load the real target points and normalize the coordinate with the size of ROI
@@ -117,9 +117,9 @@ class LandmarkDataset(Dataset):
                 local_x = all_points[0][0] - roi_x_start
                 local_y = all_points[0][1] - roi_y_start
                 input_images.append(roi)
-                output.append([local_x/size_image, local_y/size_image]) # normalize the coordinate for NN output
+                coord.append([local_x/size_image, local_y/size_image]) # normalize the coordinate for NN output
                 num_img += 1
-        return input_images, output
+        return input_images, coord
     
 # test
 if __name__ == '__main__':
