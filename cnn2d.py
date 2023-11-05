@@ -73,7 +73,6 @@ class CNN2D(nn.Module):
 class ResNet2D(nn.Module):
     def __init__(self, output_dim, pretrained=False):
         super().__init__()
-        
         resnet = torchvision.models.resnet18(pretrained=pretrained)
         resnet.fc = nn.Linear(512, output_dim)
         
@@ -82,6 +81,7 @@ class ResNet2D(nn.Module):
         self.backbone = resnet
             
     def forward(self, x):
+                
         x = self.input_layer(x)
         return self.backbone(x)
 

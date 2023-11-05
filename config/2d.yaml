@@ -1,17 +1,20 @@
 ## data
-root_dir: dummydata
-img_dir: images
+img_dir: dummydata/images/2d
 point_type: S_Point
 size_image: 520
-train_path: dummydata/S_Point/train.csv
-val_path: dummydata/S_Point/val.csv
-test_path: dummydata/S_Point/test.csv
+train_path: dummydata/S_Point/2d/train.csv
+val_path: dummydata/S_Point/2d/val.csv
+test_path: dummydata/S_Point/2d/test.csv
+
+# for ROI
+mean_x: 991
+mean_y: 952
 
 n_dim: 2d
 
 ## model
-# cnn_type: custom  
-cnn_type: resnet18 
+cnn_type: custom  
+# cnn_type: resnet18 
 
 output_dim: 2
 max_epochs: 100

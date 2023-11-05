@@ -9,12 +9,13 @@ import os
 import nibabel as nib
 import csv
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 
-def duplicate(src_dir, dst_dir, nslice=10):
+def duplicate(src_dir, dst_dir, nslice=16):
     """Duplicate the 2D image to 3D volume"""
     
-    print('Duplicate the 2D image to 3D volume')
+    print(f'Duplicate the 2D image to 3D volume with {nslice} slices')
     if not os.path.exists(dst_dir):
         os.makedirs(dst_dir)
     files = os.listdir(src_dir)
@@ -36,82 +37,118 @@ def duplicate(src_dir, dst_dir, nslice=10):
         nib.save(nii_image, os.path.join(dst_dir, save_name))
         
 
-def create_dummy_images_2d(src_dir, dst_dir, num_images=100):
-    """Create dummy images by linear interpolating two images together"""
-    print('Create dummy images by linear interpolating two images together')
+# def create_dummy_images_2d_interpolate(src_dir, dst_dir, num_images=100):
+#     """Create dummy images by linear interpolating two images together"""
+#     print('Create dummy images by linear interpolating two images together')
     
-    if not os.path.exists(dst_dir):
-        os.makedirs(dst_dir)
-    files = os.listdir(src_dir)
-    # only keep files ending with .png
-    files = [file for file in files if file.endswith('.png')]
+#     if not os.path.exists(dst_dir):
+#         os.makedirs(dst_dir)
+#     files = os.listdir(src_dir)
+#     # only keep files ending with .png
+#     files = [file for file in files if file.endswith('.png')]
     
-    for n in tqdm(range(6, num_images+1)):
-        # random pick 2 images and load
-        random.shuffle(files)
-        files = files[:2]
+#     for n in tqdm(range(6, num_images+1)):
+#         # random pick 2 images and load
+#         random.shuffle(files)
+#         files = files[:2]
     
-        image1 = cv2.imread(os.path.join(src_dir, files[0]), cv2.COLOR_BGR2GRAY)
-        image2 = cv2.imread(os.path.join(src_dir, files[1]), cv2.COLOR_BGR2GRAY)
+#         image1 = cv2.imread(os.path.join(src_dir, files[0]), cv2.COLOR_BGR2GRAY)
+#         image2 = cv2.imread(os.path.join(src_dir, files[1]), cv2.COLOR_BGR2GRAY)
 
-        # Ensure both images have the same dimensions
-        if image1.shape != image2.shape:
-            raise ValueError("Both images must have the same dimensions")
+#         # Ensure both images have the same dimensions
+#         if image1.shape != image2.shape:
+#             raise ValueError("Both images must have the same dimensions")
 
-        # random choose alpha between 0-0.3 and 0.7 to 1
-        alpha = random.uniform(0, 0.3)
-        interpolated_image = cv2.addWeighted(image1, 1 - alpha, image2, alpha, 0)
+#         # random choose alpha between 0-0.3 and 0.7 to 1
+#         alpha = random.uniform(0, 0.3)
+#         interpolated_image = cv2.addWeighted(image1, 1 - alpha, image2, alpha, 0)
         
-        save_name = 'image' + str(n) + '.png'
-        cv2.imwrite(os.path.join(dst_dir, save_name), interpolated_image)
+#         save_name = 'image' + str(n) + '.png'
+#         cv2.imwrite(os.path.join(dst_dir, save_name), interpolated_image)
     
 
-def create_dummy_points_3d(src_path, dst_path='dummydata/fake.csv', num_samples=100):
-    """Create dummy points by adding noise to the original points"""
-    data = pd.read_csv(src_path)
-    augmented_data = []
+def create_dummy_data_2d(img_src_dir, img_dst_dir, coor_src, coor_dst, num_samples=100):
+    """Create dummy data. Copy paste the original image, and add noise to the coordinates"""
+    gt_data = pd.read_csv(coor_src)
+    gt_imgs = gt_data['name'].tolist()
+    gt_imgs = [img + '.png' for img in gt_imgs]
+    
+    gt_coors = gt_data[['X', 'Y']].to_numpy(dtype=np.float32)
+    num_duplicates = num_samples // len(gt_imgs)
+    fake_data = []
+    
+    if not os.path.exists(img_dst_dir):
+        os.makedirs(img_dst_dir)
+    
+    # Copy paste the original image
+    for img, coord in zip(gt_imgs, gt_coors):
+        for i in range(num_duplicates):
+            save_name = img.replace('.png', f'_{i}.png')
+            src_path = os.path.join(img_src_dir, img)
+            dst_path = os.path.join(img_dst_dir, save_name)
+            os.system(f'cp {src_path} {dst_path}')
+            print(f'Copied {src_path} to {dst_path}')
+            
+            # add noise to the coordinates
+            noise = np.random.normal(0, 6, size=2)
+            coord += noise
+            coord = coord.round(2)
+            
+            new_data_point = {
+                'name': save_name.replace('.png', ''),
+                'X': coord[0],
+                'Y': coord[1],
+            }
+            fake_data.append(new_data_point)
+    
+    fake_df = pd.DataFrame(fake_data)
+    fake_df.to_csv(coor_dst, index=False)
+    print('Done creating dummy data')
+    print(f'Fake coors saved to {coor_dst}')
 
-    for i in range(6, num_samples + 1):
-        # Randomly select one of the existing data points
-        random_index = np.random.randint(0, len(data))
-        selected_data_point = data.iloc[random_index]
 
-        # Add noise to the selected data point (adjust noise level as needed)
-        noise = np.random.normal(0, 1, size=3).round(2)
-        augmented_data_point = selected_data_point[['X', 'Y', 'Z']] + noise
+def create_dummy_z_dim(src_csv, dst_csv):
+    """Randomly sample z dimension for each point"""
+    data = pd.read_csv(src_csv)
+    z_values = np.random.normal(8, 0.5, size=len(data)).round(2)
+    data['Z'] = z_values
+    data.to_csv(dst_csv, index=False)
+    print(f'Fake 3d coors saved to {dst_csv}')
         
-        new_data_point = {
-            'name': f'image{i}',
-            'X': augmented_data_point['X'],
-            'Y': augmented_data_point['Y'],
-            'Z': augmented_data_point['Z']
-        }
 
-        augmented_data.append(new_data_point)
-
-    augmented_df = pd.DataFrame(augmented_data)
-    augmented_df.to_csv(dst_path, index=False)
-
-
-def train_val_split(path):
-    """Split the data into train and validation set"""
+def train_val_test_split(path, seed=0):
+    """
+    Split the data into train and validation and test set
+    Ratio: 0.7, 0.15, 0.15
+    """
+    
     data = pd.read_csv(path)
-    train = data.sample(frac=0.8, random_state=200)
-    val = data.drop(train.index)
-    root_path = '/'.join(path.split('/')[:-1])
+    root = os.path.dirname(path)
     
-    train.to_csv(os.path.join(root_path, 'train.csv'), index=False)
-    val.to_csv(os.path.join(root_path, 'val.csv'), index=False)
+    train_data, val_test_data = train_test_split(data, test_size=0.3, random_state=seed)
+    val_data, test_data = train_test_split(val_test_data, test_size=0.5, random_state=seed)
+    train_data.to_csv(os.path.join(root,'train.csv'), index=False)
+    val_data.to_csv(os.path.join(root,'val.csv'), index=False)
+    test_data.to_csv(os.path.join(root,'test.csv'), index=False)
+    print('train data size: ', len(train_data))
+    print('val data size: ', len(val_data))
+    print('test data size: ', len(test_data))
+    
 
 
 if __name__ == '__main__':
-    # src_dir = 'data/2D/S_Point/Images_without'
-    # dst_dir = 'dummydata/images/2D/'
-    # create_dummy_images_2d(src_dir, dst_dir, num_images=100)
+    # img_src_dir = 'data/2D/S_Point/Images_without'
+    # img_dst_dir = 'dummydata/images/2d/'
+    # coor_src = 'dummydata/S_Point/gt.csv'
+    # coor_dst = 'dummydata/S_Point/fake_2d.csv'
+    # create_dummy_data_2d(img_src_dir, img_dst_dir, coor_src, coor_dst, num_samples=100)
     
     src_dir = 'dummydata/images/2d/'
     dst_dir = 'dummydata/images/3d/'
-    duplicate(src_dir, dst_dir, nslice=10)
+    duplicate(src_dir, dst_dir, nslice=16)
     
-    # create_dummy_points_3d(src_path='dummydata/S_Point/test.csv', dst_path='dummydata/S_Point/fake.csv', num_samples=100)
-    # train_val_split('dummydata/S_Point/fake.csv')
+    # create_dummy_z_dim('dummydata/S_Point/fake_2d.csv', 'dummydata/S_Point/fake_3d.csv')
+    
+    
+    # train_val_test_split('dummydata/S_Point/fake_2d.csv')
+    # train_val_test_split('dummydata/S_Point/fake_3d.csv')

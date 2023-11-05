@@ -9,6 +9,7 @@ from dataset import load_coordinates
 import os
 import matplotlib.pyplot as plt
 import cv2 
+import wandb
 
 
 class LandmarkDetector(pl.LightningModule):
@@ -16,6 +17,7 @@ class LandmarkDetector(pl.LightningModule):
         super().__init__()
         self.lr = cfg.lr
         self.cnn_type = cfg.cnn_type
+        self.save_dir = os.path.join('predictions', self.cnn_type)
         
         # 2D detector
         if cfg.n_dim == '2d':
@@ -28,9 +30,9 @@ class LandmarkDetector(pl.LightningModule):
         # 3D detector
         elif cfg.n_dim == '3d':
             if cfg.cnn_type == 'custom':
-                self.model = CNN3D(cfg.backbone_type, 10, cfg.output_dim, filters=30, kernel_size=4)
+                self.model = CNN3D(cfg.backbone_type, cfg.n_slice, cfg.output_dim, filters=30, kernel_size=4)
             elif cfg.cnn_type == 'resnet18':
-                self.model = ResNet3D(cfg.backbone_type, 10, cfg.output_dim)
+                self.model = ResNet3D(cfg.backbone_type, cfg.n_slice, cfg.output_dim)
             print(f'[*] 3D data using {cfg.cnn_type} model with {cfg.backbone_type} backbone')
             
         self.criterion = torch.nn.MSELoss()
@@ -91,29 +93,33 @@ class LandmarkDetector(pl.LightningModule):
         self.log('test.horizontaldistance', horizontaldistance, on_epoch=True, on_step=False)
         self.log('test.verticaldistance', verticaldistance, on_epoch=True, on_step=False)
 
-        # # plot the pred point
-        # oringinal_image = cv2.imread('data/2D/S_Point/Images_without_test/image5.png')
-        # target = target.detach().cpu().numpy()
-        # img = img.detach().cpu().numpy()
+        # visualize
+        batch_size = img.shape[0]
+        img = img.detach().cpu().numpy()
+        target = target.detach().cpu().numpy()
         
-        # plt.figure(figsize=(10, 5))
-        # plt.subplot(1, 2, 1)
-        # plt.imshow(img[0][0], cmap='gray')
-        # plt.scatter(y_hat[0][0]*size_image, y_hat[0][1]*size_image, c='r', alpha=1) 
-        # plt.scatter(target[0][0]*size_image, target[0][1]*size_image, c='g', alpha=1) 
-        # plt.title('roi view')
+        for i in range(batch_size):
+            self.plot_results(img[i], target[i], y_hat[i], self.save_dir, idx=i)
+            # self.log({
+            #     'test.pred': wandb.Image(cv2.imread(os.path.join(self.save_dir, f'{str(i)}.png'))),
+            #     })
         
-        # plt.subplot(1, 2, 2)
-        # plt.imshow(oringinal_image, cmap='gray')
-        # plt.scatter(x_pred, y_pred, c='r', alpha=1) 
-        # plt.scatter(x_coor, y_coor, c='g', alpha=1)
-        # plt.title('global view')
-        
-        # plt.suptitle('predited point in red, original point in green')
-        # save_dir = os.path.join('predictions', self.cnn_type)
-        # if not os.path.exists(save_dir):
-        #     os.makedirs(save_dir)
-        # plt.savefig(save_dir + '/image5.png')
+    @staticmethod
+    def plot_results(img, target, y_hat, save_dir, idx=None):
+        if len(img.shape) == 3:
+            img = img[0]
+        print(target, y_hat)
+        size_image = img.shape[0]
+        print(img.shape)
+        plt.figure(figsize=(5, 5))
+        plt.imshow(img, cmap='gray')
+        plt.scatter(y_hat[0]*size_image, y_hat[1]*size_image, c='r') 
+        plt.scatter(target[0]*size_image, target[1]*size_image, c='g') 
+        # plt.title('predited point in red, original point in green')
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        plt.savefig(os.path.join(save_dir, f'{str(idx)}.png'))
+        plt.close()
         
         
     def configure_optimizers(self):

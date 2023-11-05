@@ -58,28 +58,34 @@ def main(cfg: DictConfig):
         exp_name += f'_{backbone_type}backbone'
     exp_name += f'_lr{str(cfg.lr)}'
     
-        
     # logger = WandbLogger(project='landmark_detection', name=exp_name)
     logger = None
     
     model = LandmarkDetector(cfg)    
     
+    trainset = LandmarkDataset(cfg.train_path, cfg.img_dir, cfg.n_dim, cfg.point_type, cfg.size_image, cfg.mean_x, cfg.mean_y, transform=None)
+    valset = LandmarkDataset(cfg.val_path, cfg.img_dir, cfg.n_dim, cfg.point_type, cfg.size_image, cfg.mean_x, cfg.mean_y, transform=None)
+    testset = LandmarkDataset(cfg.test_path, cfg.img_dir, cfg.n_dim, cfg.point_type, cfg.size_image, cfg.mean_x, cfg.mean_y, transform=None)
+    print(f'Length of trainset: {len(trainset)}')
+    print(f'Length of valset: {len(valset)}')
+    print(f'Length of testset: {len(testset)}')
+    
     train_loader = DataLoader(
-        LandmarkDataset(cfg.train_path, cfg.n_dim, cfg.root_dir, cfg.img_dir, cfg.point_type, cfg.size_image, transform=transforms),
+        trainset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=0,
         pin_memory=False
     )
     val_dataloader = DataLoader(
-        LandmarkDataset(cfg.val_path, cfg.n_dim, cfg.root_dir, cfg.img_dir, cfg.point_type, cfg.size_image, transform=None),
+        valset,
         batch_size=batch_size,
         shuffle=False,
         num_workers=0,
         pin_memory=False
     )
     test_dataloader = DataLoader(
-        LandmarkDataset(cfg.test_path, cfg.n_dim, cfg.root_dir, cfg.img_dir, cfg.point_type, cfg.size_image, transform=None),
+        testset,
         batch_size=batch_size,
         shuffle=False,
         num_workers=0,
