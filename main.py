@@ -45,8 +45,8 @@ def build_transforms():
     
     return t
 
-@hydra.main(config_path="config", config_name="2d")
-# @hydra.main(config_path="config", config_name="3d")
+# @hydra.main(config_path="config", config_name="2d")
+@hydra.main(config_path="config", config_name="3d")
 def main(cfg: DictConfig):
     max_epochs = cfg.max_epochs
     batch_size = cfg.batch_size
@@ -105,14 +105,14 @@ def main(cfg: DictConfig):
         logger=logger,
         )    
 
-    # trainer.fit(model, 
-    #             train_dataloaders=train_loader, 
-    #             val_dataloaders=val_dataloader
-    #             )
-    ckpt = 'checkpoints/2d/custom/epoch=23.ckpt'
+    trainer.fit(model, 
+                train_dataloaders=train_loader, 
+                val_dataloaders=val_dataloader
+                )
+    # ckpt = 'checkpoints/2d/custom/epoch=23.ckpt'
     trainer.test(model, 
                  dataloaders=test_dataloader, 
-                 ckpt_path=ckpt,
+                #  ckpt_path=ckpt,
                  )
     
 

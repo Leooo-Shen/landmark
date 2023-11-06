@@ -17,8 +17,8 @@ n_slice: 16
 # cnn_type: custom  
 cnn_type: resnet18 
 
-backbone_type: 2d
-# backbone_type: 3d
+# backbone_type: 2d
+backbone_type: 3d
 
 output_dim: 3
 max_epochs: 100

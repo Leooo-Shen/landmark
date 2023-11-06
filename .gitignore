@@ -4,5 +4,5 @@ lightning_logs
 wandb
 checkpoints
 outputs
-images
+dummydata/images/3d
 predictions
