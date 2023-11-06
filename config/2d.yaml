@@ -11,6 +11,7 @@ mean_x: 991
 mean_y: 952
 
 n_dim: 2d
+n_slice: 1
 
 ## model
 cnn_type: custom  

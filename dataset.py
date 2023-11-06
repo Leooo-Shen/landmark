@@ -146,7 +146,6 @@ class LandmarkDataset(Dataset):
         self.n_dim = n_dim.lower()
         assert self.n_dim in ['2d', '3d']
         self.img_dir = img_dir
-        print(self.img_dir)
         self.data = pd.read_csv(csv_path)
         self.size_image = size_image
         self.roi_x_start, self.roi_x_end, self.roi_y_start, self.roi_y_end = self.ROI(mean_x, mean_y, size_image)
@@ -181,33 +180,18 @@ class LandmarkDataset(Dataset):
         target = np.array(target)
         
         if target_normalize:
-            target = target / self.size_image
+            target[0] = target[0] / self.size_image
+            target[1] = target[1] / self.size_image
+            if self.n_dim == '3d':
+                target[2] = target[2] / 16
             
         target = torch.tensor(target, dtype=torch.float32)    
         return image, target
-    
-    # def get_mean_x_y(self, txt_path):
-    #     # read the mean XY from prepration, to create ROI later
-    #     f = open(txt_path, 'r')
-    #     num_line = 0
-    #     x_start_text = 'Mean_X:'
-    #     x_end_text = ','
-    #     y_start_text = 'Mean_Y:'
-    #     y_end_text = ';'
 
-    #     for line in f:
-    #         num_line += 1
-    #         x_coor = line[line.find(x_start_text) + len(x_start_text): line.find(x_end_text)]
-    #         y_coor = line[line.find(y_start_text) + len(y_start_text): line.find(y_end_text)]
-    #         mean_x = int(x_coor)
-    #         mean_y = int(y_coor)
-
-    #     return mean_x, mean_y
-    
     def ROI(self, mean_x, mean_y, size_image):
         "create ROI and normalize the coordinate"
         
-        half_size = int(size_image/2)
+        half_size = int(size_image / 2)
         roi_x_start = mean_x - half_size
         roi_x_end = mean_x + half_size
         roi_y_start = mean_y - half_size
