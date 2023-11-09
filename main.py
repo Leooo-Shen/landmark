@@ -58,8 +58,8 @@ def main(cfg: DictConfig):
         exp_name += f'_{backbone_type}backbone'
     exp_name += f'_lr{str(cfg.lr)}'
     
-    # logger = WandbLogger(project='landmark_detection', name=exp_name)
-    logger = None
+    logger = WandbLogger(project='landmark_detection', name=exp_name)
+    # logger = None
     
     model = LandmarkDetector(cfg)    
     
@@ -109,7 +109,7 @@ def main(cfg: DictConfig):
                 train_dataloaders=train_loader, 
                 val_dataloaders=val_dataloader
                 )
-    # ckpt = 'checkpoints/2d/custom/epoch=23.ckpt'
+    # ckpt = 'checkpoints/3d/custom/epoch=19.ckpt'
     trainer.test(model, 
                  dataloaders=test_dataloader, 
                 #  ckpt_path=ckpt,

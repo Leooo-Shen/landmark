@@ -17,7 +17,7 @@ class LandmarkDetector(pl.LightningModule):
         super().__init__()
         self.lr = cfg.lr
         self.cnn_type = cfg.cnn_type
-        self.save_dir = os.path.join('predictions', self.cnn_type)
+        self.save_dir = os.path.join(*['predictions', cfg.n_dim, self.cnn_type + f'_{cfg.backbone_type}backbone'])
         
         # 2D detector
         if cfg.n_dim == '2d':
@@ -84,14 +84,22 @@ class LandmarkDetector(pl.LightningModule):
     
     def test_step(self, batch, batch_idx):
         img, target = batch
-        size_image = img.shape[2]
+        size_image = img.shape[-1]
         half_size = int(size_image / 2)
         
         pred = self.forward(img)
         
-        pred = (pred * size_image).int()
-        target = (target * size_image).int()
-        
+        if self.n_dim == '2d':
+            pred = (pred * size_image).int()
+            target = (target * size_image).int()
+        elif self.n_dim == '3d':
+            pred[:, :2] = pred[:, :1] * size_image
+            target[:, :2] = target[:, :1] * size_image
+            pred[:, 2] = pred[:, 2] * 16
+            target[:, 2] = target[:, 2] * 16
+            pred = pred.int()
+            target = target.int()
+            
         self.test_step_outputs.append({'image': img.detach().cpu().numpy(), 
                                        'target': target.detach().cpu().numpy(), 
                                        'pred': pred.detach().cpu().numpy()
@@ -132,10 +140,11 @@ class LandmarkDetector(pl.LightningModule):
             self.plot_results(img[i], target[i], pred[i], self.save_dir, idx=i)
         print(f'[*] Visualize the first batch of testset in {self.save_dir}')
         
-    @staticmethod
-    def plot_results(img, target, pred, save_dir, idx=None):
+    def plot_results(self, img, target, pred, save_dir, idx=None):
         if len(img.shape) == 3:
             img = img[0]
+        elif len(img.shape) == 4:
+            img = img[0][0]
         size_image = img.shape[0]
         fig = plt.figure(figsize=(5, 5))
         plt.imshow(img, cmap='gray')
@@ -158,7 +167,7 @@ class LandmarkDetector(pl.LightningModule):
             D = np.sqrt(delta_x ** 2 + delta_y ** 2)
         elif self.n_dim == '3d':
             delta_z = delta[:, 2]
-            z_distance = torch.abs(delta_z).mean().item()
+            z_distance = np.abs(delta_z).mean().item()
             D = np.sqrt(delta_x ** 2 + delta_y ** 2 + delta_z ** 2)
             distances.append(z_distance)
             
@@ -167,8 +176,6 @@ class LandmarkDetector(pl.LightningModule):
         
         return mre, std, distances
         
-    
-    
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
