@@ -2,8 +2,8 @@ from typing import Tuple
 import torch
 import torchmetrics
 import pytorch_lightning as pl
-from cnn2d import CNN2D, ResNet2D
-from cnn3d import CNN3D, ResNet3D
+from model.cnn2d import CNN2D, ResNet2D
+from model.cnn3d import CNN3D, ResNet3D
 import numpy as np 
 from dataset import load_coordinates
 import os

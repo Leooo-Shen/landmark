@@ -3,7 +3,7 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from dataset import LandmarkDataset
-from lightning_module import LandmarkDetector
+from model.lightning_module import LandmarkDetector
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from transform import RandomRotation, ColorJitter, GaussianBlur
