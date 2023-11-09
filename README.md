@@ -63,6 +63,6 @@ Adjust the config in `config` folder, also modify the corrsponding config_name i
 
 Then run the training and testing. 
 
-```python main.py```
+```python main.py hydra.job.chdir=False```
 
 Model checkpoints are saved at `checkpoints` folder. Prediction results are saved at `predictions` folder. 
