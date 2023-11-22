@@ -45,8 +45,8 @@ def build_transforms():
     
     return t
 
-# @hydra.main(config_path="config", config_name="2d")
-@hydra.main(config_path="config", config_name="3d")
+@hydra.main(config_path="config", config_name="2d")
+# @hydra.main(config_path="config", config_name="3d")
 def main(cfg: DictConfig):
     max_epochs = cfg.max_epochs
     batch_size = cfg.batch_size

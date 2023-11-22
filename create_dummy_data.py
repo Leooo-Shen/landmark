@@ -10,9 +10,12 @@ import nibabel as nib
 import csv
 import pandas as pd
 from sklearn.model_selection import train_test_split
+import torchvision
+from torchvision.transforms import ColorJitter, GaussianBlur
+from PIL import Image
 
 
-def duplicate(src_dir, dst_dir, nslice=16):
+def duplicate_2d_to_3d(src_dir, dst_dir, nslice=16):
     """Duplicate the 2D image to 3D volume"""
     
     print(f'Duplicate the 2D image to 3D volume with {nslice} slices')
@@ -67,6 +70,13 @@ def duplicate(src_dir, dst_dir, nslice=16):
 #         cv2.imwrite(os.path.join(dst_dir, save_name), interpolated_image)
     
 
+transform = torchvision.transforms.Compose([
+    ColorJitter(brightness=0.3, contrast=0.2, saturation=0, hue=0),
+    GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),
+                            ]) 
+                    
+
+
 def create_dummy_data_2d(img_src_dir, img_dst_dir, coor_src, coor_dst, num_samples=100):
     """Create dummy data. Copy paste the original image, and add noise to the coordinates"""
     gt_data = pd.read_csv(coor_src)
@@ -80,14 +90,19 @@ def create_dummy_data_2d(img_src_dir, img_dst_dir, coor_src, coor_dst, num_sampl
     if not os.path.exists(img_dst_dir):
         os.makedirs(img_dst_dir)
     
-    # Copy paste the original image
+    # augment the original image and save
     for img, coord in zip(gt_imgs, gt_coors):
         for i in range(num_duplicates):
             save_name = img.replace('.png', f'_{i}.png')
             src_path = os.path.join(img_src_dir, img)
             dst_path = os.path.join(img_dst_dir, save_name)
-            os.system(f'cp {src_path} {dst_path}')
-            print(f'Copied {src_path} to {dst_path}')
+            image = Image.open(src_path)
+            image = transform(image)
+            image.save(dst_path)
+            print(f'image saved to {dst_path}')
+            
+            # os.system(f'cp {src_path} {dst_path}')
+            # print(f'Copied {src_path} to {dst_path}')
             
             # add noise to the coordinates
             noise = np.random.normal(0, 6, size=2)
@@ -145,7 +160,7 @@ if __name__ == '__main__':
     
     src_dir = 'dummydata/images/2d/'
     dst_dir = 'dummydata/images/3d/'
-    duplicate(src_dir, dst_dir, nslice=16)
+    duplicate_2d_to_3d(src_dir, dst_dir, nslice=16)
     
     # create_dummy_z_dim('dummydata/S_Point/fake_2d.csv', 'dummydata/S_Point/fake_3d.csv')
     
