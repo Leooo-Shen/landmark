@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from cnn2d import CNN2D, ResNet2D
-from resnet_helper import generate_model
+from model.cnn2d import CNN2D, ResNet2D
+from model.resnet_helper import generate_model
 
 class CNN3D(nn.Module):
     def __init__(self, backbone_type, in_channels, output_dim, filters=None, kernel_size=None):

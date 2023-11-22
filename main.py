@@ -3,7 +3,7 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from dataset import LandmarkDataset
-from lightning_module import LandmarkDetector
+from model.lightning_module import LandmarkDetector
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from transform import RandomRotation, ColorJitter, GaussianBlur
@@ -74,27 +74,28 @@ def main(cfg: DictConfig):
         trainset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=0,
+        num_workers=8,
         pin_memory=False
     )
     val_dataloader = DataLoader(
         valset,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=0,
+        num_workers=8,
         pin_memory=False
     )
     test_dataloader = DataLoader(
         testset,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=0,
+        num_workers=8,
         pin_memory=False
     )
     
-    accelerator = 'mps'
-    if cfg.n_dim == '3d' and cfg.backbone_type == '3d':
-        accelerator = 'cpu'
+    accelerator = 'gpu'
+    # accelerator = 'mps'
+    # if cfg.n_dim == '3d' and cfg.backbone_type == '3d':
+    #     accelerator = 'cpu'
     
     trainer = pl.Trainer(
         accelerator=accelerator,

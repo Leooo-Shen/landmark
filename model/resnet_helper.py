@@ -1,3 +1,6 @@
+# Helper functions for 3D ResNet models
+# Taken from https://github.com/kenshohara/3D-ResNets-PyTorch/blob/master/models/resnet.py
+
 import math
 from functools import partial
 
