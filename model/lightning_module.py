@@ -93,8 +93,13 @@ class LandmarkDetector(pl.LightningModule):
             pred = (pred * size_image).int()
             target = (target * size_image).int()
         elif self.n_dim == '3d':
-            pred[:, :2] = pred[:, :1] * size_image
-            target[:, :2] = target[:, :1] * size_image
+            # rescale x
+            pred[:, 0] = pred[:, 0] * size_image
+            pred[:, 1] = pred[:, 1] * size_image
+            # rescale y
+            target[:, 0] = target[:, 0] * size_image
+            target[:, 1] = target[:, 1] * size_image
+            # rescale z
             pred[:, 2] = pred[:, 2] * 16
             target[:, 2] = target[:, 2] * 16
             pred = pred.int()

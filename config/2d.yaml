@@ -14,8 +14,8 @@ n_dim: 2d
 n_slice: 1
 
 ## model
-# cnn_type: custom  
-cnn_type: resnet18 
+cnn_type: custom  
+# cnn_type: resnet18 
 backbone_type: 2d
 
 

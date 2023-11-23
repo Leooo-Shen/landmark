@@ -75,21 +75,21 @@ def main(cfg: DictConfig):
         batch_size=batch_size,
         shuffle=True,
         num_workers=8,
-        pin_memory=False
+        pin_memory=True
     )
     val_dataloader = DataLoader(
         valset,
         batch_size=batch_size,
         shuffle=False,
         num_workers=8,
-        pin_memory=False
+        pin_memory=True
     )
     test_dataloader = DataLoader(
         testset,
         batch_size=batch_size,
         shuffle=False,
         num_workers=8,
-        pin_memory=False
+        pin_memory=True
     )
     
     accelerator = 'gpu'
@@ -110,7 +110,7 @@ def main(cfg: DictConfig):
                 train_dataloaders=train_loader, 
                 val_dataloaders=val_dataloader
                 )
-    # ckpt = 'checkpoints/3d/custom/epoch=19.ckpt'
+    
     trainer.test(model, 
                  dataloaders=test_dataloader, 
                 #  ckpt_path=ckpt,
